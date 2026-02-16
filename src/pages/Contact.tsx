@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import emailjs from '@emailjs/browser'
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -7,39 +8,54 @@ export default function Contact() {
     message: '',
   })
 
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    console.log(form)
+    setStatus('sending')
+
+    try {
+      await emailjs.send(
+        'service_sa4m2em',
+        'template_90luone',
+        {
+          from_name: form.name,
+          from_email: form.email,
+          message: form.message,
+        },
+        'AoYdN8wbPnhHyLvBl'
+      )
+
+      setStatus('sent')
+      setForm({ name: '', email: '', message: '' })
+    } catch (error) {
+      console.error(error)
+      setStatus('error')
+    }
   }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-3xl mx-auto">
 
-        {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold">Contact</h1>
           <p className="text-zinc-400 mt-3">
-            For questions, feedback, or collaboration inquiries.
+            Send a message directly.
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Name */}
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">
-                Name
-              </label>
+              <label className="block text-sm text-zinc-400 mb-2">Name</label>
               <input
                 name="name"
                 value={form.name}
@@ -49,11 +65,8 @@ export default function Contact() {
               />
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">
-                Email
-              </label>
+              <label className="block text-sm text-zinc-400 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
@@ -64,11 +77,8 @@ export default function Contact() {
               />
             </div>
 
-            {/* Message */}
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">
-                Message
-              </label>
+              <label className="block text-sm text-zinc-400 mb-2">Message</label>
               <textarea
                 name="message"
                 value={form.message}
@@ -79,20 +89,22 @@ export default function Contact() {
               />
             </div>
 
-            {/* Button */}
             <button
               type="submit"
-              className="w-full bg-pink-600 hover:bg-pink-700 transition rounded-lg py-3 font-semibold"
+              disabled={status === 'sending'}
+              className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 transition rounded-lg py-3 font-semibold"
             >
-              Send Message
+              {status === 'sending' ? 'Sending…' : 'Send Message'}
             </button>
 
-          </form>
-        </div>
+            {status === 'sent' && (
+              <p className="text-green-400 text-sm">Message sent successfully.</p>
+            )}
+            {status === 'error' && (
+              <p className="text-red-400 text-sm">Failed to send. Check configuration.</p>
+            )}
 
-        {/* Extra info */}
-        <div className="text-center text-zinc-500 text-sm mt-8">
-          <p>Or reach out via social platforms.</p>
+          </form>
         </div>
 
       </div>
