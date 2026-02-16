@@ -1,9 +1,7 @@
 import express from 'express'
 import cors from 'cors'
-
-const app = express()
-app.use(cors())
-app.use(express.json())
+import type { Request, Response } from 'express'
+import { readDB, writeDB } from './db'
 
 type Comment = {
   id: string
@@ -12,15 +10,17 @@ type Comment = {
   createdAt: string
 }
 
-let comments: Comment[] = []
+const app = express()
+app.use(cors())
+app.use(express.json())
 
-app.get('/api/comments', (req, res) => {
+app.get('/api/comments', (req: Request, res: Response) => {
   const { seriesId } = req.query
-  const filtered = comments.filter(c => c.seriesId === seriesId)
-  res.json(filtered)
+  const comments = readDB().filter((c: Comment) => c.seriesId === seriesId)
+  res.json(comments)
 })
 
-app.post('/api/comments', (req, res) => {
+app.post('/api/comments', (req: Request, res: Response) => {
   const { seriesId, text } = req.body
 
   const newComment: Comment = {
@@ -30,7 +30,10 @@ app.post('/api/comments', (req, res) => {
     createdAt: new Date().toISOString()
   }
 
-  comments.unshift(newComment)
+  const db = readDB()
+  db.push(newComment)
+  writeDB(db)
+
   res.json(newComment)
 })
 
