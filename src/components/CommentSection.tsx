@@ -5,38 +5,52 @@ type Props = {
   seriesId: string
 }
 
-export default function CommentSection({ seriesId }: Props) {
-  const storageKey = `comments-${seriesId}`
+const API_BASE = 'http://localhost:4000' // change if your backend runs elsewhere
 
+export default function CommentSection({ seriesId }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey)
-    if (saved) {
-      setComments(JSON.parse(saved))
+    async function load() {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/comments?seriesId=${seriesId}`
+        )
+        if (!res.ok) throw new Error('Failed to fetch comments')
+        const data = await res.json()
+        setComments(data)
+      } catch (err) {
+        console.error('LOAD COMMENTS ERROR', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [storageKey])
 
-  function handleSubmit(e: React.FormEvent) {
+    load()
+  }, [seriesId])
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
 
-    const newComment: Comment = {
-      id: crypto.randomUUID(),
-      text: text.trim(),
-      createdAt: new Date().toISOString(),
+    try {
+      const res = await fetch(`${API_BASE}/api/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seriesId, text: text.trim() })
+      })
+
+      if (!res.ok) throw new Error('Failed to add comment')
+
+      const newComment: Comment = await res.json()
+
+      setComments(prev => [newComment, ...prev])
+      setText('')
+    } catch (err) {
+      console.error('ADD COMMENT ERROR', err)
     }
-
-    const updated = [newComment, ...comments]
-
-    setComments(updated)
-    localStorage.setItem(storageKey, JSON.stringify(updated))
-
-    console.log('COMMENT ADDED', newComment)
-    console.log('ALL COMMENTS', updated)
-
-    setText('')
   }
 
   return (
@@ -44,14 +58,18 @@ export default function CommentSection({ seriesId }: Props) {
       <h3 className="text-lg font-semibold mb-4">Comments</h3>
 
       <div className="space-y-3 mb-6">
-        {comments.length === 0 && (
+        {loading && (
+          <p className="text-zinc-400 text-sm">Loading...</p>
+        )}
+
+        {!loading && comments.length === 0 && (
           <p className="text-zinc-400 text-sm">No comments yet.</p>
         )}
 
-        {comments.map((c) => (
+        {comments.map(c => (
           <div
             key={c.id}
-            className="bg-zinc-900 text-white rounded-md p-3 text-sm"
+            className="bg-zinc-900 rounded-md p-3 text-sm"
           >
             <p>{c.text}</p>
             <span className="text-xs text-zinc-500">
@@ -64,14 +82,14 @@ export default function CommentSection({ seriesId }: Props) {
       <form onSubmit={handleSubmit} className="space-y-3">
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={e => setText(e.target.value)}
           placeholder="Write a comment..."
-          className="w-full bg-zinc-800 p-3 rounded-md text-sm outline-none focus:ring-2 focus:ring-pink-500"
+          className="w-full bg-zinc-800 p-3 rounded-md text-sm outline-none"
         />
 
         <button
           type="submit"
-          className="bg-pink-600 px-4 py-2 rounded-md text-sm font-medium"
+          className="bg-pink-600 px-4 py-2 rounded-md text-sm"
         >
           Add Comment
         </button>
