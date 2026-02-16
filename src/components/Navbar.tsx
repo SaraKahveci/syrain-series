@@ -30,7 +30,6 @@ export default function Navbar() {
             <li><Link to="/add-series">Add Series</Link></li>
             <li><Link to="/">Series</Link></li>
             <li><Link to="/favorites">Favorites</Link></li>
-            <li><Link to="/movies">Movies</Link></li>
             <li><Link to="/contact">Contact</Link></li>
 
             <li>
@@ -61,7 +60,6 @@ export default function Navbar() {
             <Link to="/add-series" className="block">Add Series</Link>
             <Link to="/" className="block">Series</Link>
             <Link to="/favorites" className="block">Favorites</Link>
-            <Link to="/movies" className="block">Movies</Link>
             <Link to="/contact" className="block">Contact</Link>
 
             <form onSubmit={handleSubmit}>
