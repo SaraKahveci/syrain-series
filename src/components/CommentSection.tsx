@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Comment } from '../types/series'
 
 type Props = {
@@ -6,14 +6,17 @@ type Props = {
 }
 
 export default function CommentSection({ seriesId }: Props) {
-  const [comments, setComments] = useState<Comment[]>(() => {
-    const saved = localStorage.getItem(`comments-${seriesId}`)
-    return saved ? JSON.parse(saved) : []
-  })
+  const storageKey = `comments-${seriesId}`
 
+  const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
 
-  const isAdmin = localStorage.getItem('isAdmin') === 'true'
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      setComments(JSON.parse(saved))
+    }
+  }, [storageKey])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,16 +24,17 @@ export default function CommentSection({ seriesId }: Props) {
 
     const newComment: Comment = {
       id: crypto.randomUUID(),
-      text,
+      text: text.trim(),
       createdAt: new Date().toISOString(),
     }
 
     const updated = [newComment, ...comments]
+
     setComments(updated)
-    localStorage.setItem(
-      `comments-${seriesId}`,
-      JSON.stringify(updated)
-    )
+    localStorage.setItem(storageKey, JSON.stringify(updated))
+
+    console.log('COMMENT ADDED', newComment)
+    console.log('ALL COMMENTS', updated)
 
     setText('')
   }
@@ -39,7 +43,6 @@ export default function CommentSection({ seriesId }: Props) {
     <div className="mt-10 border-t text-white border-zinc-800 pt-6">
       <h3 className="text-lg font-semibold mb-4">Comments</h3>
 
-      {/* Comments list */}
       <div className="space-y-3 mb-6">
         {comments.length === 0 && (
           <p className="text-zinc-400 text-sm">No comments yet.</p>
@@ -58,21 +61,21 @@ export default function CommentSection({ seriesId }: Props) {
         ))}
       </div>
 
-      {/* Admin only */}
-      {isAdmin && (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a comment..."
-            className="w-full bg-zinc-800 p-3 rounded-md text-sm outline-none focus:ring-2 focus:ring-pink-500"
-          />
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Write a comment..."
+          className="w-full bg-zinc-800 p-3 rounded-md text-sm outline-none focus:ring-2 focus:ring-pink-500"
+        />
 
-          <button className="bg-pink-600 px-4 py-2 rounded-md text-sm font-medium">
-            Add Comment
-          </button>
-        </form>
-      )}
+        <button
+          type="submit"
+          className="bg-pink-600 px-4 py-2 rounded-md text-sm font-medium"
+        >
+          Add Comment
+        </button>
+      </form>
     </div>
   )
 }
