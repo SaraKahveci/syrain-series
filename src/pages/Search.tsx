@@ -13,33 +13,37 @@ export default function Search() {
 
   useEffect(() => {
     if (!query) return
-
+  
     async function load() {
       setLoading(true)
-
-      // 🔹 manual + static
+  
       const localSeries = getSeries().filter(s =>
         s.title.toLowerCase().includes(query.toLowerCase())
       )
-
-      // 🔹 TMDB
-      const tmdbData = await searchSeries(query)
-      const apiSeries: Series[] = tmdbData.results.map((item: any) => ({
-        id: item.id,
-        title: item.name,
-        image: item.poster_path
-          ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-          : '/placeholder.jpg',
-        rating: item.vote_average / 2,
-      }))
-
-      setResults([...localSeries, ...apiSeries])
-      setLoading(false)
+  
+      try {
+        const tmdbData = await searchSeries(query)
+  
+        const apiSeries: Series[] = tmdbData.results.map((item: any) => ({
+          id: item.id,
+          title: item.name,
+          image: item.poster_path
+            ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+            : '/placeholder.jpg',
+          rating: item.vote_average / 2,
+        }))
+  
+        setResults([...localSeries, ...apiSeries])
+      } catch {
+        setResults(localSeries)
+      } finally {
+        setLoading(false)
+      }
     }
-
+  
     load()
   }, [query])
-
+  
   if (loading) return <p className="p-6 text-white">Searching...</p>
 
   return (
