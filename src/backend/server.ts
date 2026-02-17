@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import type { Request, Response } from 'express'
-import { readDB, writeDB } from './db'
+import { readDB, writeDB } from './db.ts'
 
 type Comment = {
   id: string
