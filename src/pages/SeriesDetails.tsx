@@ -73,7 +73,8 @@ export default function SeriesDetails() {
       <p className="mt-4 text-gray-600">
         {series.overview || 'No description available.'}
       </p>
-      <CommentSection seriesId={id!} />
+      <CommentSection seriesId={series.id} />
+
 
     </div>
   )

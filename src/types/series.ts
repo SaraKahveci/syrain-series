@@ -1,5 +1,6 @@
 export type Comment = {
   id: string;
+  email: string;
   seriesID: string;
   text: string;
   createdAt: string;
