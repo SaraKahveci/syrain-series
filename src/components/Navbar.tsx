@@ -35,7 +35,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <h1 className="text-xl font-bold">
-          <Link to="/">Syrian Series</Link>
+          <Link to="/">Arabic Series</Link>
         </h1>
 
         {/* Desktop Menu */}
