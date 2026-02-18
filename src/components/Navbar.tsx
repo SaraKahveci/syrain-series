@@ -2,10 +2,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { auth } from '../firebase'
 import { onAuthStateChanged, signOut, User } from 'firebase/auth'
+import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const [query, setQuery] = useState('')
   const [user, setUser] = useState<User | null>(null)
+  const [open, setOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -18,11 +20,13 @@ export default function Navbar() {
     if (!query.trim()) return
     navigate(`/search?q=${query}`)
     setQuery('')
+    setOpen(false)
   }
 
   async function handleLogout() {
     await signOut(auth)
     navigate('/')
+    setOpen(false)
   }
 
   return (
@@ -34,6 +38,7 @@ export default function Navbar() {
           <Link to="/">Syrian Series</Link>
         </h1>
 
+        {/* Desktop Menu */}
         <ul className="hidden md:flex gap-6 items-center">
 
           <li><Link className="hover:text-pink-400" to="/">Home</Link></li>
@@ -42,7 +47,6 @@ export default function Navbar() {
           <li><Link className="hover:text-pink-400" to="/movies">Movies</Link></li>
           <li><Link className="hover:text-pink-400" to="/contact">Contact</Link></li>
 
-          {/* Search */}
           <li>
             <form onSubmit={handleSubmit}>
               <input
@@ -54,8 +58,6 @@ export default function Navbar() {
             </form>
           </li>
 
-          {/* AUTH BUTTONS */}
-
           {!user && (
             <>
               <li>
@@ -66,7 +68,6 @@ export default function Navbar() {
                   Login
                 </Link>
               </li>
-
               <li>
                 <Link
                   to="/register"
@@ -80,10 +81,7 @@ export default function Navbar() {
 
           {user && (
             <>
-              <li className="text-xs text-zinc-400">
-                {user.email}
-              </li>
-
+              <li className="text-xs text-zinc-400">{user.email}</li>
               <li>
                 <button
                   onClick={handleLogout}
@@ -94,9 +92,69 @@ export default function Navbar() {
               </li>
             </>
           )}
-
         </ul>
+
+        {/* Mobile Button */}
+        <button
+          className="md:hidden"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {open && (
+        <div className="md:hidden px-6 pb-4 space-y-4 border-t border-zinc-800">
+
+          <Link onClick={() => setOpen(false)} className="block" to="/">Home</Link>
+          <Link onClick={() => setOpen(false)} className="block" to="/add-series">Add Series</Link>
+          <Link onClick={() => setOpen(false)} className="block" to="/favorites">Favorites</Link>
+          <Link onClick={() => setOpen(false)} className="block" to="/movies">Movies</Link>
+          <Link onClick={() => setOpen(false)} className="block" to="/contact">Contact</Link>
+
+          <form onSubmit={handleSubmit}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search series..."
+              className="w-full bg-zinc-800 px-3 py-2 rounded-md text-sm outline-none focus:ring-2 focus:ring-pink-500"
+            />
+          </form>
+
+          {!user && (
+            <div className="flex gap-3">
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="flex-1 text-center bg-pink-600 py-2 rounded-md text-sm font-semibold"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setOpen(false)}
+                className="flex-1 text-center border border-zinc-700 py-2 rounded-md text-sm"
+              >
+                Register
+              </Link>
+            </div>
+          )}
+
+          {user && (
+            <div className="space-y-2">
+              <div className="text-xs text-zinc-400">{user.email}</div>
+              <button
+                onClick={handleLogout}
+                className="w-full bg-zinc-800 py-2 rounded-md text-sm"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+
+        </div>
+      )}
     </nav>
   )
 }

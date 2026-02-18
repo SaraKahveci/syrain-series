@@ -13,36 +13,28 @@ export default function SeriesDetails() {
 
   useEffect(() => {
     if (!id) return
-
-      const localSeries: Series[] = JSON.parse(
-        localStorage.getItem('custom-series') || '[]'
-      )
-      
-      const foundLocal = localSeries.find(
-        s => s.id.toString() === id
-      )
-      
-      if (foundLocal) {
-        setSeries(foundLocal)
-        setLoading(false)
-        return
-      }
-      
   
+    const localSeries: Series[] = JSON.parse(
+      localStorage.getItem('custom-series') || '[]'
+    )
+  
+    const foundLocal = localSeries.find(
+      s => s.id.toString() === id
+    )
   
     if (foundLocal) {
       setSeries(foundLocal)
       setLoading(false)
       return
     }
-
-    // 2️⃣ إذا مو محلي → TMDB
-    getSeriesDetails(id).then(data => {
-      setSeries(data)
-      setLoading(false)
-    })
+  
+    getSeriesDetails(id)
+      .then(data => setSeries(data))
+      .catch(() => setSeries(null))
+      .finally(() => setLoading(false))
+  
   }, [id])
-
+  
   if (loading) return <p className="text-center mt-10">Loading...</p>
 
   if (!series) return <p className="text-center mt-10">Series not found</p>
