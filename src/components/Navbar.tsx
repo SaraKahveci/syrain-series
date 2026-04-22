@@ -33,19 +33,112 @@ export default function Navbar() {
     <nav className="w-full bg-black text-white">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
+<<<<<<< HEAD
         {/* Logo */}
         <h1 className="text-xl font-bold">
           <Link to="/">Arabic Series</Link>
         </h1>
+=======
+          {/* Desktop menu */}
+          <ul className="hidden md:flex gap-6 items-center">
+            <li>
+              <Link to="/" className="transition-colors hover:text-pink-400">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link to="/add-series" className="transition-colors hover:text-pink-400">
+                Add Series
+              </Link>
+            </li>
+            <li>
+              <Link to="/" className="transition-colors hover:text-pink-400">
+                Series
+              </Link>
+            </li>
+            <li>
+              <Link to="/favorites" className="transition-colors hover:text-pink-400">
+                Favorites
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="transition-colors hover:text-pink-400">
+                Contact
+              </Link>
+            </li>
+            <li>
+              <form onSubmit={handleSubmit}>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search series..."
+                  className="bg-zinc-800 px-3 py-1.5 rounded-md text-sm w-40 lg:w-56 outline-none focus:ring-2 focus:ring-pink-500"
+                />
+              </form>
+            </li>
+
+            {user?.email === "sarakahveci3@gmail.com" && (
+              <li>
+                <Link
+                  to="/admin"
+                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
+
+            {user ? (
+              <li>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
+                >
+                  Logout
+                </button>
+              </li>
+            ) : (
+              <li>
+                <Link
+                  to="/auth"
+                  className="bg-pink-600 hover:bg-pink-700 transition text-sm px-4 py-2 rounded-lg font-semibold"
+                >
+                  Sign In
+                </Link>
+              </li>
+            )}
+          </ul>
+>>>>>>> 1599637 (fixed navbar)
 
         {/* Desktop Menu */}
         <ul className="hidden md:flex gap-6 items-center">
 
+<<<<<<< HEAD
           <li><Link className="hover:text-pink-400" to="/">Home</Link></li>
           <li><Link className="hover:text-pink-400" to="/add-series">Add Series</Link></li>
           <li><Link className="hover:text-pink-400" to="/favorites">Favorites</Link></li>
           <li><Link className="hover:text-pink-400" to="/movies">Movies</Link></li>
           <li><Link className="hover:text-pink-400" to="/contact">Contact</Link></li>
+=======
+        {/* Mobile menu */}
+        {open && (
+          <div className="md:hidden mt-4 space-y-4">
+            <Link to="/" className="block">
+              Home
+            </Link>
+            <Link to="/add-series" className="block">
+              Add Series
+            </Link>
+            <Link to="/" className="block">
+              Series
+            </Link>
+            <Link to="/favorites" className="block">
+              Favorites
+            </Link>
+            <Link to="/contact" className="block">
+              Contact
+            </Link>
+>>>>>>> 1599637 (fixed navbar)
 
           <li>
             <form onSubmit={handleSubmit}>
