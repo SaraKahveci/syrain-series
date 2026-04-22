@@ -5,11 +5,13 @@ import { onAuthStateChanged, User } from 'firebase/auth'
 type AuthContextType = {
   user: User | null
   loading: boolean
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  refreshUser: async () => {}
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -24,8 +26,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe
   }, [])
 
+  const refreshUser = async () => {
+    const current = auth.currentUser
+    if (!current) return
+    await current.reload()
+    setUser(auth.currentUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
