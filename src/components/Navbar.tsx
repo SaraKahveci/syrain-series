@@ -39,7 +39,10 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link to="/add-series" className="transition-colors hover:text-pink-400">
+              <Link
+                to="/add-series"
+                className="transition-colors hover:text-pink-400"
+              >
                 Add Series
               </Link>
             </li>
@@ -49,12 +52,18 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link to="/favorites" className="transition-colors hover:text-pink-400">
+              <Link
+                to="/favorites"
+                className="transition-colors hover:text-pink-400"
+              >
                 Favorites
               </Link>
             </li>
             <li>
-              <Link to="/contact" className="transition-colors hover:text-pink-400">
+              <Link
+                to="/contact"
+                className="transition-colors hover:text-pink-400"
+              >
                 Contact
               </Link>
             </li>
@@ -69,23 +78,35 @@ export default function Navbar() {
               </form>
             </li>
 
-            {user?.email === 'sarakahveci3@gmail.com' && (
-  <li>
-    <Link to="/admin" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
-      Admin
-    </Link>
-  </li>
-)}
-
-            {user ? (
+            {user?.email === "sarakahveci3@gmail.com" && (
               <li>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
+                <Link
+                  to="/admin"
+                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
                 >
-                  Logout
-                </button>
+                  Admin
+                </Link>
               </li>
+            )}
+            {user ? (
+              <>
+                <li>
+                  <Link
+                    to="/profile"
+                    className="text-sm text-zinc-400 hover:text-white transition-colors truncate max-w-[160px]"
+                  >
+                    {user.displayName ?? user.email}
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
             ) : (
               <li>
                 <Link
