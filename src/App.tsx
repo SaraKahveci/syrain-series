@@ -12,6 +12,7 @@ import { FavouriteProvider } from "./context/FavouriteContext";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Actor from './pages/Actor';
+import Profile from "./pages/Profile";
 export default function App() {
   return (
     <FavouriteProvider>
@@ -28,6 +29,8 @@ export default function App() {
           <Route path="/series" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/seriesdetails" element={<SeriesDetails />} />
+
+          <Route path="/profile" element={<Profile />} />
           {/* Details */}
           <Route path="/series/:id" element={<SeriesDetails />} />
 

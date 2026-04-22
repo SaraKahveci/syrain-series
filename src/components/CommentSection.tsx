@@ -41,15 +41,21 @@ export default function CommentSection({ seriesId }: Props) {
       orderBy('createdAt', 'desc')
     )
 
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const data = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      } as Comment))
-      setComments(data)
-      setLoading(false)
-    })
-
+    const unsubscribe = onSnapshot(q, 
+      snapshot => {
+        console.log('SNAPSHOT DOCS:', snapshot.docs.length)
+        const data = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        } as Comment))
+        setComments(data)
+        setLoading(false)
+      },
+      error => {
+        console.error('SNAPSHOT ERROR:', error)
+        setLoading(false)
+      }
+    )
     return unsubscribe
   }, [seriesId])
 
