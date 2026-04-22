@@ -9,29 +9,17 @@ export default function SeriesCard(props: Props) {
   const { id, title, image, rating } = props
   const { toggleFavourite, isFavourite } = useFavourite()
 
-  const imgSrc =
-    image && image !== '' ? image : '/placeholder.jpg'
+  const imgSrc = image && image !== '' ? image : '/placeholder.jpg'
 
   return (
     <div className="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition">
-      
-      {id < 1_000_000_000 ? (
-        <Link to={`/series/${id}`}>
-          <img
-            src={imgSrc}
-            alt={title}
-            className="h-72 w-full object-cover"
-          />
-        </Link>
-      ) : (
-        <Link to={`/series/${id}`}>
-          <img
-            src={imgSrc}
-            alt={title}
-            className="h-72 w-full object-cover"
-          />
-        </Link>
-      )}
+      <Link to={`/series/${id}`}>
+        <img
+          src={imgSrc}
+          alt={title}
+          className="h-72 w-full object-cover"
+        />
+      </Link>
 
       <div className="p-4">
         <h3 className="font-bold text-white first-letter:uppercase text-lg">

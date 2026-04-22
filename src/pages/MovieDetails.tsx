@@ -1,0 +1,201 @@
+import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getMovieDetails, getMovieCast } from "../api/tmdb";
+import RatingStars from "../components/RatingStars";
+import { useAuth } from "../context/AuthContext";
+import { useFavourite } from "../context/FavouriteContext";
+import { db } from "../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { getMovies } from "../services/movieStore";
+import { Movie } from "../types/series";
+import ReviewSection from "../components/ReviewSection";
+
+export default function MovieDetails() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const { toggleFavourite, isFavourite } = useFavourite();
+  const [movie, setMovie] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [userRating, setUserRating] = useState(0);
+  const [cast, setCast] = useState<any[]>([]);
+  const [isLocal, setIsLocal] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const localMovies: Movie[] = getMovies();
+    const foundLocal = localMovies.find((m) => m.id.toString() === id);
+
+    if (foundLocal) {
+      setMovie(foundLocal);
+      setIsLocal(true);
+      setLoading(false);
+      return;
+    }
+
+    getMovieDetails(id).then((data) => {
+      setMovie(data);
+      setLoading(false);
+    });
+
+    getMovieCast(id).then((data) => {
+      setCast(data.cast?.slice(0, 12) ?? []);
+    });
+  }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    async function loadRating() {
+      const ref = doc(db, "ratings", `${user!.uid}_movie_${id}`);
+      const snap = await getDoc(ref);
+      if (snap.exists()) setUserRating(snap.data().rating);
+    }
+    loadRating();
+  }, [user, id]);
+
+  async function handleRate(rating: number) {
+    if (!user || !id) return;
+    const ref = doc(db, "ratings", `${user.uid}_movie_${id}`);
+    await setDoc(ref, {
+      uid: user.uid,
+      seriesId: `movie_${id}`,
+      rating,
+      createdAt: new Date().toISOString(),
+    });
+    setUserRating(rating);
+  }
+
+  function handleToggle() {
+    if (!user || !id || !movie) return;
+    toggleFavourite({
+      id: Number(id),
+      title: movie.title,
+      image:
+        movie.image || `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+      rating: movie.rating ?? movie.vote_average / 2,
+    });
+  }
+
+  if (loading)
+    return <p className="text-center mt-10 text-white">Loading...</p>;
+  if (!movie)
+    return <p className="text-center mt-10 text-white">Movie not found</p>;
+
+  const favorited = isFavourite(Number(id));
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto text-white">
+      <img
+        src={
+          movie.image || `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        }
+        className="rounded-xl mb-6 w-full max-h-[500px] object-cover"
+      />
+
+      {/* Title + Favorite */}
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
+        {user && (
+          <button
+            onClick={handleToggle}
+            className={`shrink-0 text-2xl transition-transform hover:scale-110 ${
+              favorited ? "text-pink-500" : "text-zinc-500"
+            }`}
+          >
+            {favorited ? "♥" : "♡"}
+          </button>
+        )}
+      </div>
+
+      {/* Rating */}
+      {user ? (
+        <div>
+          <p className="text-sm text-zinc-400 mb-1">Your rating:</p>
+          <RatingStars rating={userRating} onRate={handleRate} />
+        </div>
+      ) : (
+        <div>
+          <RatingStars rating={movie.rating || movie.vote_average / 2} />
+          <p className="text-xs text-zinc-500 mt-1">
+            Sign in to rate this movie.
+          </p>
+        </div>
+      )}
+
+      <p className="mt-4 text-gray-400">
+        {movie.overview || "No description available."}
+      </p>
+
+      {/* Movie Info */}
+      {!isLocal && (
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {movie.release_date && (
+            <div className="bg-zinc-900 rounded-lg p-3">
+              <p className="text-xs text-zinc-500">Release Date</p>
+              <p className="text-sm text-white mt-1">{movie.release_date}</p>
+            </div>
+          )}
+          {movie.runtime && (
+            <div className="bg-zinc-900 rounded-lg p-3">
+              <p className="text-xs text-zinc-500">Runtime</p>
+              <p className="text-sm text-white mt-1">{movie.runtime} min</p>
+            </div>
+          )}
+          {movie.status && (
+            <div className="bg-zinc-900 rounded-lg p-3">
+              <p className="text-xs text-zinc-500">Status</p>
+              <p className="text-sm text-white mt-1">{movie.status}</p>
+            </div>
+          )}
+          {movie.genres?.length > 0 && (
+            <div className="bg-zinc-900 rounded-lg p-3 col-span-2">
+              <p className="text-xs text-zinc-500">Genres</p>
+              <p className="text-sm text-white mt-1">
+                {movie.genres.map((g: any) => g.name).join(", ")}
+              </p>
+            </div>
+          )}
+          {movie.budget > 0 && (
+            <div className="bg-zinc-900 rounded-lg p-3">
+              <p className="text-xs text-zinc-500">Budget</p>
+              <p className="text-sm text-white mt-1">
+                ${movie.budget.toLocaleString()}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cast */}
+      {!isLocal && cast.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-4">Cast</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            {cast.map((member: any) => (
+              <Link to={`/actor/${member.id}`} key={member.id}>
+                <div className="text-center hover:scale-105 transition cursor-pointer">
+                  <img
+                    src={
+                      member.profile_path
+                        ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+                        : "/placeholder.jpg"
+                    }
+                    alt={member.name}
+                    className="w-full h-28 object-cover rounded-lg mb-1"
+                  />
+                  <p className="text-xs text-white font-medium truncate">
+                    {member.name}
+                  </p>
+                  <p className="text-xs text-zinc-500 truncate">
+                    {member.character}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      <ReviewSection contentId={`movie_${id}`} />
+    </div>
+  );
+}

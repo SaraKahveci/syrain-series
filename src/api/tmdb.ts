@@ -56,7 +56,33 @@ export async function getActorCredits(personId: string) {
   if (!res.ok) throw new Error('Failed to fetch actor credits')
   return res.json()
 }
+export async function getPopularMovies() {
+  const res = await fetch(
+    `${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ar&with_original_language=ar`
+  )
+  if (!res.ok) throw new Error('Failed to fetch movies')
+  return res.json()
+}
 
+export async function getMoviesByFilter(sortBy: string) {
+  const res = await fetch(
+    `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=ar&sort_by=${sortBy}&with_original_language=ar&page=1`
+  )
+  if (!res.ok) throw new Error('Failed to fetch filtered movies')
+  return res.json()
+}
+
+export async function getMovieDetails(id: string) {
+  const res = await fetch(`${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=ar`)
+  if (!res.ok) throw new Error('Failed to fetch movie details')
+  return res.json()
+}
+
+export async function getMovieCast(id: string) {
+  const res = await fetch(`${BASE_URL}/movie/${id}/credits?api_key=${API_KEY}&language=ar`)
+  if (!res.ok) throw new Error('Failed to fetch movie cast')
+  return res.json()
+}
 export interface TMDBSeries {
   id: number
   name: string

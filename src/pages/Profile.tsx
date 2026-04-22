@@ -2,37 +2,26 @@ import { useAuth } from '../context/AuthContext'
 import { useFavourite } from '../context/FavouriteContext'
 import { useEffect, useState } from 'react'
 import { db, auth } from '../firebase'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-} from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
 import { Link, useNavigate } from 'react-router-dom'
 import { signOut, updateProfile } from 'firebase/auth'
 
-type RatingItem = {
-  seriesId: string
-  rating: number
-}
-
-type CommentItem = {
+type ReviewItem = {
   id: string
-  seriesId: string
+  contentId: string
   text: string
+  rating: number
   createdAt: string
 }
 
 export default function Profile() {
   const { user, refreshUser, loading } = useAuth()
   const { favourites } = useFavourite()
-  const [ratings, setRatings] = useState<RatingItem[]>([])
-  const [comments, setComments] = useState<CommentItem[]>([])
+  const [reviews, setReviews] = useState<ReviewItem[]>([])
   const [displayName, setDisplayName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tab, setTab] = useState<'favorites' | 'ratings' | 'comments'>('favorites')
+  const [tab, setTab] = useState<'favorites' | 'reviews'>('favorites')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -45,25 +34,18 @@ export default function Profile() {
     setDisplayName(user.displayName ?? '')
 
     async function loadData() {
-      const ratingsSnap = await getDocs(
-        query(collection(db, 'ratings'), where('uid', '==', user!.uid))
-      )
-      setRatings(ratingsSnap.docs.map(d => ({
-        seriesId: d.data().seriesId,
-        rating: d.data().rating,
-      })))
-
-      const commentsSnap = await getDocs(
+      const reviewsSnap = await getDocs(
         query(
-          collection(db, 'comments'),
+          collection(db, 'reviews'),
           where('uid', '==', user!.uid),
           orderBy('createdAt', 'desc')
         )
       )
-      setComments(commentsSnap.docs.map(d => ({
+      setReviews(reviewsSnap.docs.map(d => ({
         id: d.id,
-        seriesId: d.data().seriesId,
+        contentId: d.data().contentId,
         text: d.data().text,
+        rating: d.data().rating,
         createdAt: d.data().createdAt,
       })))
     }
@@ -127,8 +109,7 @@ export default function Profile() {
             </div>
             <div className="flex gap-4 mt-3 text-sm text-zinc-500">
               <span>{favourites.length} favorites</span>
-              <span>{ratings.length} ratings</span>
-              <span>{comments.length} comments</span>
+              <span>{reviews.length} reviews</span>
             </div>
           </div>
 
@@ -143,19 +124,22 @@ export default function Profile() {
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6">
-        {(['favorites', 'ratings', 'comments'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition capitalize ${
-              tab === t ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
-            }`}
-          >
-            {t === 'favorites' && `❤️ Favorites (${favourites.length})`}
-            {t === 'ratings' && `⭐ Ratings (${ratings.length})`}
-            {t === 'comments' && `💬 Comments (${comments.length})`}
-          </button>
-        ))}
+        <button
+          onClick={() => setTab('favorites')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+            tab === 'favorites' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
+          }`}
+        >
+          ❤️ Favorites ({favourites.length})
+        </button>
+        <button
+          onClick={() => setTab('reviews')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+            tab === 'reviews' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
+          }`}
+        >
+          ⭐ Reviews ({reviews.length})
+        </button>
       </div>
 
       {/* Favorites tab */}
@@ -188,45 +172,27 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Ratings tab */}
-      {tab === 'ratings' && (
-        <div className="space-y-2">
-          {ratings.length === 0 ? (
-            <p className="text-zinc-500 text-sm">No ratings yet.</p>
-          ) : (
-            ratings.map(r => (
-              <Link
-                to={`/series/${r.seriesId}`}
-                key={r.seriesId}
-                className="flex items-center justify-between bg-zinc-900 rounded-lg px-4 py-3 hover:bg-zinc-800 transition"
-              >
-                <span className="text-sm text-zinc-300">Series #{r.seriesId}</span>
-                <span className="text-yellow-400 text-sm">
-                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
-                </span>
-              </Link>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Comments tab */}
-      {tab === 'comments' && (
+      {/* Reviews tab */}
+      {tab === 'reviews' && (
         <div className="space-y-3">
-          {comments.length === 0 ? (
-            <p className="text-zinc-500 text-sm">No comments yet.</p>
+          {reviews.length === 0 ? (
+            <p className="text-zinc-500 text-sm">No reviews yet.</p>
           ) : (
-            comments.map(c => (
+            reviews.map(r => (
               <Link
-                to={`/series/${c.seriesId}`}
-                key={c.id}
-                className="block bg-zinc-900 rounded-lg px-4 py-3 hover:bg-zinc-800 transition"
+                to={`/series/${r.contentId}`}
+                key={r.id}
+                className="block bg-zinc-900 rounded-xl px-4 py-4 hover:bg-zinc-800 transition"
               >
-                <p className="text-sm text-white">{c.text}</p>
-                <div className="flex gap-3 mt-1 text-xs text-zinc-500">
-                  <span>Series #{c.seriesId}</span>
-                  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-yellow-400 text-sm">
+                    {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {new Date(r.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
+                <p className="text-sm text-zinc-300">{r.text}</p>
               </Link>
             ))
           )}

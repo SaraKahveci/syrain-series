@@ -46,11 +46,12 @@ export default function Navbar() {
                 Add Series
               </Link>
             </li>
-            {/* <li>
-              <Link to="/" className="transition-colors hover:text-pink-400">
-                Series
-              </Link>
-            </li> */}
+<li>
+  <Link to="/movies" className="transition-colors hover:text-pink-400">Movies</Link>
+</li>
+<li>
+  <Link to="/add-movie" className="transition-colors hover:text-pink-400">Add Movie</Link>
+</li>
             <li>
               <Link
                 to="/favorites"
