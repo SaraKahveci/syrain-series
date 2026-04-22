@@ -2,14 +2,14 @@ const BASE_URL = 'https://api.themoviedb.org/3'
 const API_KEY = '255227246862979880faf00116fac593'
 
 export async function getPopularSeries() {
-  const res = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=ar`)
+  const res = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=ar&with_original_language=ar`)
   if (!res.ok) throw new Error('Failed to fetch series')
   return res.json()
 }
 
 export async function searchSeries(query: string) {
   const res = await fetch(
-    `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}`
+    `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ar&with_original_language=ar`
   )
   if (!res.ok) throw new Error('Search failed')
   return res.json()
@@ -32,6 +32,14 @@ export async function getSeriesEpisodes(id: string, seasonNumber: number) {
     `${BASE_URL}/tv/${id}/season/${seasonNumber}?api_key=${API_KEY}&language=ar`
   )
   if (!res.ok) throw new Error('Failed to fetch episodes')
+  return res.json()
+}
+
+export async function getSeriesByFilter(sortBy: string) {
+  const res = await fetch(
+    `${BASE_URL}/discover/tv?api_key=${API_KEY}&language=ar&sort_by=${sortBy}&with_original_language=ar&page=1`
+  )
+  if (!res.ok) throw new Error('Failed to fetch filtered series')
   return res.json()
 }
 
