@@ -28,7 +28,7 @@ export default function Navbar() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-lg sm:text-xl font-bold">
-            Syrian Series
+            Arabic Series
           </Link>
 
           {/* Desktop menu */}
