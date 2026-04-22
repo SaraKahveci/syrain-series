@@ -69,16 +69,13 @@ export default function Navbar() {
               </form>
             </li>
 
-            {user?.email === "sarakahveci3@gmail.com" && (
-              <li>
-                <Link
-                  to="/admin"
-                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
-                >
-                  Admin
-                </Link>
-              </li>
-            )}
+            {user?.email === 'sarakahveci3@gmail.com' && (
+  <li>
+    <Link to="/admin" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
+      Admin
+    </Link>
+  </li>
+)}
 
             {user ? (
               <li>
