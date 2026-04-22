@@ -25,7 +25,7 @@ type CommentItem = {
 }
 
 export default function Profile() {
-  const { user, refreshUser } = useAuth()
+  const { user, refreshUser, loading } = useAuth()
   const { favourites } = useFavourite()
   const [ratings, setRatings] = useState<RatingItem[]>([])
   const [comments, setComments] = useState<CommentItem[]>([])
@@ -36,10 +36,12 @@ export default function Profile() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (loading) return
     if (!user) {
       navigate('/login')
       return
     }
+
     setDisplayName(user.displayName ?? '')
 
     async function loadData() {
@@ -67,14 +69,14 @@ export default function Profile() {
     }
 
     loadData()
-  }, [user, navigate])
+  }, [user, loading])
 
   async function handleSaveName() {
     if (!user || !displayName.trim()) return
     setSaving(true)
     try {
       await updateProfile(user, { displayName: displayName.trim() })
-      await refreshUser?.()
+      refreshUser()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } finally {
@@ -87,6 +89,7 @@ export default function Profile() {
     navigate('/')
   }
 
+  if (loading) return <p className="text-center mt-10 text-white">Loading...</p>
   if (!user) return null
 
   return (
