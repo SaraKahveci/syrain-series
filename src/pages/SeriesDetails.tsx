@@ -86,7 +86,7 @@ export default function SeriesDetails() {
       id: Number(id),
       title: series.title || series.name,
       image: series.image || `https://image.tmdb.org/t/p/w500${series.poster_path}`,
-      rating: series.rating ?? series.vote_average / 2 ?? 0,
+      rating: series.rating ?? series.vote_average / 2,
     })
   }
 
