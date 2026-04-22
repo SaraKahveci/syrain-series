@@ -11,6 +11,7 @@ import Search from "./pages/Search";
 import { FavouriteProvider } from "./context/FavouriteContext";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import Actor from './pages/Actor';
 export default function App() {
   return (
     <FavouriteProvider>
@@ -29,6 +30,8 @@ export default function App() {
           <Route path="/seriesdetails" element={<SeriesDetails />} />
           {/* Details */}
           <Route path="/series/:id" element={<SeriesDetails />} />
+
+<Route path="/actor/:id" element={<Actor />} />
         </Routes>
       </BrowserRouter>
     </FavouriteProvider>
