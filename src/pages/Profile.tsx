@@ -67,14 +67,14 @@ export default function Profile() {
     }
 
     loadData()
-  }, [user])
+  }, [user, navigate])
 
   async function handleSaveName() {
     if (!user || !displayName.trim()) return
     setSaving(true)
     try {
       await updateProfile(user, { displayName: displayName.trim() })
-      refreshUser()
+      await refreshUser?.()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } finally {
