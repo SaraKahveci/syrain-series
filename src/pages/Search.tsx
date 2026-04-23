@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { searchSeries } from '../api/tmdb'
+import { searchSeries, getGenres } from '../api/tmdb'
 import { getSeries } from '../services/seriesStore'
 import { getMovies } from '../services/movieStore'
 import SeriesCard from '../components/SeriesCard'
@@ -18,6 +18,12 @@ type Result = {
   image: string
   rating: number
   type: 'series' | 'movie'
+  genreIds: number[]
+}
+
+type Genre = {
+  id: number
+  name: string
 }
 
 export default function Search() {
@@ -27,6 +33,12 @@ export default function Search() {
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<Filter>('all')
   const [sortBy, setSortBy] = useState<SortBy>('relevance')
+  const [genres, setGenres] = useState<Genre[]>([])
+  const [selectedGenre, setSelectedGenre] = useState<number | null>(null)
+
+  useEffect(() => {
+    getGenres().then(data => setGenres(data))
+  }, [])
 
   useEffect(() => {
     if (!query) return
@@ -36,11 +48,11 @@ export default function Search() {
 
       const localSeries = getSeries().filter(s =>
         s.title.toLowerCase().includes(query.toLowerCase())
-      ).map((s: Series): Result => ({ ...s, type: 'series' }))
+      ).map((s: Series): Result => ({ ...s, type: 'series', genreIds: [] }))
 
       const localMovies = getMovies().filter(m =>
         m.title.toLowerCase().includes(query.toLowerCase())
-      ).map((m: Movie): Result => ({ ...m, type: 'movie' }))
+      ).map((m: Movie): Result => ({ ...m, type: 'movie', genreIds: [] }))
 
       try {
         const [seriesData, moviesData] = await Promise.all([
@@ -56,6 +68,7 @@ export default function Search() {
             : '/placeholder.jpg',
           rating: item.vote_average / 2,
           type: 'series' as const,
+          genreIds: item.genre_ids ?? [],
         }))
 
         const apiMovies: Result[] = (moviesData.results ?? []).map((item: any) => ({
@@ -66,6 +79,7 @@ export default function Search() {
             : '/placeholder.jpg',
           rating: item.vote_average / 2,
           type: 'movie' as const,
+          genreIds: item.genre_ids ?? [],
         }))
 
         setResults([...localSeries, ...localMovies, ...apiSeries, ...apiMovies])
@@ -81,11 +95,16 @@ export default function Search() {
 
   const filtered = results
     .filter(r => filter === 'all' || (filter === 'series' ? r.type === 'series' : r.type === 'movie'))
+    .filter(r => selectedGenre === null || r.genreIds.includes(selectedGenre))
     .sort((a, b) => {
       if (sortBy === 'rating_high') return b.rating - a.rating
       if (sortBy === 'rating_low') return a.rating - b.rating
       return 0
     })
+
+  // only show genres that appear in current results
+  const activeGenreIds = new Set(results.flatMap(r => r.genreIds))
+  const visibleGenres = genres.filter(g => activeGenreIds.has(g.id))
 
   const seriesCount = results.filter(r => r.type === 'series').length
   const moviesCount = results.filter(r => r.type === 'movie').length
@@ -96,11 +115,11 @@ export default function Search() {
     <div className="p-6">
       <h1 className="text-xl font-bold text-white mb-6">
         Results for: <span className="text-pink-400">{query}</span>
-        <span className="text-zinc-500 text-sm font-normal ml-2">({results.length} found)</span>
+        <span className="text-zinc-500 text-sm font-normal ml-2">({filtered.length} found)</span>
       </h1>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center">
+      {/* Type filters + sort */}
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
         <div className="flex gap-2">
           {[
             { key: 'all', label: `All (${results.length})` },
@@ -132,6 +151,35 @@ export default function Search() {
         </select>
       </div>
 
+      {/* Genre filters */}
+      {visibleGenres.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => setSelectedGenre(null)}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+              selectedGenre === null
+                ? 'bg-pink-600 text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+            }`}
+          >
+            All Genres
+          </button>
+          {visibleGenres.map(g => (
+            <button
+              key={g.id}
+              onClick={() => setSelectedGenre(selectedGenre === g.id ? null : g.id)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                selectedGenre === g.id
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {filtered.length === 0 && (
         <p className="text-zinc-500">No results found.</p>
       )}
@@ -139,7 +187,13 @@ export default function Search() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {filtered.map(result => (
           result.type === 'series' ? (
-            <SeriesCard key={`series-${result.id}`} id={result.id} title={result.title} image={result.image} rating={result.rating} />
+            <SeriesCard
+              key={`series-${result.id}`}
+              id={result.id}
+              title={result.title}
+              image={result.image}
+              rating={result.rating}
+            />
           ) : (
             <Link to={`/movies/${result.id}`} key={`movie-${result.id}`}>
               <div className="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition">
