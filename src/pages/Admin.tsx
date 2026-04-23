@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { db } from '../firebase'
 import {
   collection,
@@ -13,9 +13,13 @@ import {
 
 const ADMIN_EMAIL = 'sarakahveci3@gmail.com'
 
-type Comment = {
+type Review = {
   id: string
-  seriesId: string
+  uid: string
+  userEmail: string
+  userName: string
+  contentId: string
+  rating: number
   text: string
   createdAt: string
 }
@@ -30,20 +34,21 @@ type Rating = {
 export default function Admin() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [comments, setComments] = useState<Comment[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
   const [ratings, setRatings] = useState<Rating[]>([])
-  const [tab, setTab] = useState<'comments' | 'ratings'>('comments')
+  const [tab, setTab] = useState<'reviews' | 'ratings'>('reviews')
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
     if (user.email !== ADMIN_EMAIL) { navigate('/'); return }
 
     async function loadData() {
-      const commentsSnap = await getDocs(
-        query(collection(db, 'comments'), orderBy('createdAt', 'desc'))
+      const reviewsSnap = await getDocs(
+        query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
       )
-      setComments(commentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Comment)))
+      setReviews(reviewsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Review)))
 
       const ratingsSnap = await getDocs(collection(db, 'ratings'))
       setRatings(ratingsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Rating)))
@@ -54,9 +59,9 @@ export default function Admin() {
     loadData()
   }, [user])
 
-  async function deleteComment(id: string) {
-    await deleteDoc(doc(db, 'comments', id))
-    setComments(prev => prev.filter(c => c.id !== id))
+  async function deleteReview(id: string) {
+    await deleteDoc(doc(db, 'reviews', id))
+    setReviews(prev => prev.filter(r => r.id !== id))
   }
 
   async function deleteRating(id: string) {
@@ -64,34 +69,61 @@ export default function Admin() {
     setRatings(prev => prev.filter(r => r.id !== id))
   }
 
+  const filteredReviews = reviews.filter(r =>
+    search === '' ||
+    r.text.toLowerCase().includes(search.toLowerCase()) ||
+    r.userEmail.toLowerCase().includes(search.toLowerCase()) ||
+    r.userName.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const filteredRatings = ratings.filter(r =>
+    search === '' || r.uid.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const avgRating = ratings.length > 0
+    ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+    : '—'
+
   if (loading) return <p className="text-center mt-10 text-white">Loading...</p>
 
   return (
     <div className="max-w-5xl mx-auto p-6 text-white">
-      <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-1">Admin Dashboard</h1>
       <p className="text-zinc-400 text-sm mb-8">Logged in as {user?.email}</p>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-zinc-900 rounded-xl p-5">
-          <p className="text-zinc-400 text-sm">Total Comments</p>
-          <p className="text-4xl font-bold mt-1">{comments.length}</p>
+          <p className="text-zinc-400 text-sm">Total Reviews</p>
+          <p className="text-4xl font-bold mt-1">{reviews.length}</p>
         </div>
         <div className="bg-zinc-900 rounded-xl p-5">
           <p className="text-zinc-400 text-sm">Total Ratings</p>
           <p className="text-4xl font-bold mt-1">{ratings.length}</p>
         </div>
+        <div className="bg-zinc-900 rounded-xl p-5">
+          <p className="text-zinc-400 text-sm">Avg Rating</p>
+          <p className="text-4xl font-bold mt-1 text-yellow-400">{avgRating}</p>
+        </div>
       </div>
+
+      {/* Search */}
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search by user or content..."
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-pink-500 mb-6"
+      />
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6">
         <button
-          onClick={() => setTab('comments')}
+          onClick={() => setTab('reviews')}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            tab === 'comments' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
+            tab === 'reviews' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
           }`}
         >
-          Comments ({comments.length})
+          ⭐ Reviews ({reviews.length})
         </button>
         <button
           onClick={() => setTab('ratings')}
@@ -99,31 +131,50 @@ export default function Admin() {
             tab === 'ratings' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
           }`}
         >
-          Ratings ({ratings.length})
+          🌟 Ratings ({ratings.length})
         </button>
       </div>
 
-      {/* Comments tab */}
-      {tab === 'comments' && (
+      {/* Reviews tab */}
+      {tab === 'reviews' && (
         <div className="space-y-3">
-          {comments.length === 0 && (
-            <p className="text-zinc-500 text-sm">No comments yet.</p>
+          {filteredReviews.length === 0 && (
+            <p className="text-zinc-500 text-sm">No reviews found.</p>
           )}
-          {comments.map(c => (
-            <div key={c.id} className="bg-zinc-900 rounded-xl p-4 flex justify-between items-start gap-4">
-              <div>
-                <p className="text-sm text-white">{c.text}</p>
-                <div className="flex gap-3 mt-1 text-xs text-zinc-500">
-                  <span>Series: {c.seriesId}</span>
-                  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+          {filteredReviews.map(r => (
+            <div key={r.id} className="bg-zinc-900 rounded-xl p-4">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
+                    {(r.userName || r.userEmail || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{r.userName || r.userEmail}</p>
+                    <p className="text-xs text-zinc-500">{r.userEmail}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-yellow-400 text-sm">
+                    {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {new Date(r.createdAt).toLocaleDateString()}
+                  </span>
+                  <button
+                    onClick={() => deleteReview(r.id)}
+                    className="text-red-400 hover:text-red-300 text-xs transition"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => deleteComment(c.id)}
-                className="text-red-400 hover:text-red-300 text-xs shrink-0 transition"
+              <p className="text-sm text-zinc-300 mt-3">{r.text}</p>
+              <Link
+                to={`/series/${r.contentId}`}
+                className="text-xs text-pink-400 hover:text-pink-300 mt-2 inline-block"
               >
-                Delete
-              </button>
+                View content →
+              </Link>
             </div>
           ))}
         </div>
@@ -132,13 +183,13 @@ export default function Admin() {
       {/* Ratings tab */}
       {tab === 'ratings' && (
         <div className="space-y-3">
-          {ratings.length === 0 && (
-            <p className="text-zinc-500 text-sm">No ratings yet.</p>
+          {filteredRatings.length === 0 && (
+            <p className="text-zinc-500 text-sm">No ratings found.</p>
           )}
-          {ratings.map(r => (
+          {filteredRatings.map(r => (
             <div key={r.id} className="bg-zinc-900 rounded-xl p-4 flex justify-between items-center gap-4">
               <div>
-                <p className="text-sm text-white">Series: {r.seriesId}</p>
+                <p className="text-sm text-white">Content: {r.seriesId}</p>
                 <p className="text-xs text-zinc-500 mt-1">User: {r.uid}</p>
               </div>
               <div className="flex items-center gap-4">
