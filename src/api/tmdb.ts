@@ -83,6 +83,30 @@ export async function getMovieCast(id: string) {
   if (!res.ok) throw new Error('Failed to fetch movie cast')
   return res.json()
 }
+
+export async function getSeriesVideos(id: string) {
+  const res = await fetch(`${BASE_URL}/tv/${id}/videos?api_key=${API_KEY}&language=ar`)
+  if (!res.ok) throw new Error('Failed to fetch videos')
+  return res.json()
+}
+
+export async function getMovieVideos(id: string) {
+  const res = await fetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`)
+  if (!res.ok) throw new Error('Failed to fetch videos')
+  return res.json()
+}
+
+export async function getSimilarSeries(id: string) {
+  const res = await fetch(`${BASE_URL}/tv/${id}/similar?api_key=${API_KEY}&language=ar`)
+  if (!res.ok) throw new Error('Failed to fetch similar series')
+  return res.json()
+}
+
+export async function getSimilarMovies(id: string) {
+  const res = await fetch(`${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}&language=ar`)
+  if (!res.ok) throw new Error('Failed to fetch similar movies')
+  return res.json()
+}
 export interface TMDBSeries {
   id: number
   name: string

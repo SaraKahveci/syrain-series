@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext'
 import { useFavourite } from '../context/FavouriteContext'
 import { useEffect, useState } from 'react'
 import { db, auth } from '../firebase'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore'
 import { Link, useNavigate } from 'react-router-dom'
 import { signOut, updateProfile } from 'firebase/auth'
 
@@ -14,14 +14,24 @@ type ReviewItem = {
   createdAt: string
 }
 
+type WatchlistItem = {
+  id: string
+  contentId: string
+  type: 'series' | 'movie'
+  title: string
+  image: string
+  addedAt: string
+}
+
 export default function Profile() {
   const { user, refreshUser, loading } = useAuth()
   const { favourites } = useFavourite()
   const [reviews, setReviews] = useState<ReviewItem[]>([])
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
   const [displayName, setDisplayName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tab, setTab] = useState<'favorites' | 'reviews'>('favorites')
+  const [tab, setTab] = useState<'favorites' | 'reviews' | 'watchlist'>('favorites')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -48,6 +58,22 @@ export default function Profile() {
         rating: d.data().rating,
         createdAt: d.data().createdAt,
       })))
+
+      const watchlistSnap = await getDocs(
+        query(
+          collection(db, 'watchlist'),
+          where('uid', '==', user!.uid),
+          orderBy('addedAt', 'desc')
+        )
+      )
+      setWatchlist(watchlistSnap.docs.map(d => ({
+        id: d.id,
+        contentId: d.data().contentId,
+        type: d.data().type,
+        title: d.data().title,
+        image: d.data().image,
+        addedAt: d.data().addedAt,
+      })))
     }
 
     loadData()
@@ -64,6 +90,11 @@ export default function Profile() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleRemoveWatchlist(id: string) {
+    await deleteDoc(doc(db, 'watchlist', id))
+    setWatchlist(prev => prev.filter(w => w.id !== id))
   }
 
   async function handleLogout() {
@@ -110,6 +141,7 @@ export default function Profile() {
             <div className="flex gap-4 mt-3 text-sm text-zinc-500">
               <span>{favourites.length} favorites</span>
               <span>{reviews.length} reviews</span>
+              <span>{watchlist.length} watchlist</span>
             </div>
           </div>
 
@@ -123,7 +155,7 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-6 flex-wrap">
         <button
           onClick={() => setTab('favorites')}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
@@ -131,6 +163,14 @@ export default function Profile() {
           }`}
         >
           ❤️ Favorites ({favourites.length})
+        </button>
+        <button
+          onClick={() => setTab('watchlist')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+            tab === 'watchlist' ? 'bg-pink-600' : 'bg-zinc-800 hover:bg-zinc-700'
+          }`}
+        >
+          🕐 Watchlist ({watchlist.length})
         </button>
         <button
           onClick={() => setTab('reviews')}
@@ -166,6 +206,41 @@ export default function Profile() {
                     </div>
                   </div>
                 </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Watchlist tab */}
+      {tab === 'watchlist' && (
+        <div>
+          {watchlist.length === 0 ? (
+            <p className="text-zinc-500 text-sm">Your watchlist is empty.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {watchlist.map(w => (
+                <div key={w.id} className="relative">
+                  <Link to={w.type === 'movie' ? `/movies/${w.contentId}` : `/series/${w.contentId}`}>
+                    <div className="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition">
+                      <img
+                        src={w.image || '/placeholder.jpg'}
+                        alt={w.title}
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="p-2">
+                        <p className="text-sm font-medium truncate">{w.title}</p>
+                        <p className="text-xs text-zinc-500 capitalize">{w.type}</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => handleRemoveWatchlist(w.id)}
+                    className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full hover:bg-red-600 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           )}
