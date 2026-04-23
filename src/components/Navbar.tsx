@@ -40,18 +40,36 @@ export default function Navbar() {
             </li>
             <li>
               <Link
+                to="/genres"
+                className="transition-colors hover:text-pink-400"
+              >
+                Genres
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/add-series"
                 className="transition-colors hover:text-pink-400"
               >
                 Add Series
               </Link>
             </li>
-<li>
-  <Link to="/movies" className="transition-colors hover:text-pink-400">Movies</Link>
-</li>
-<li>
-  <Link to="/add-movie" className="transition-colors hover:text-pink-400">Add Movie</Link>
-</li>
+            <li>
+              <Link
+                to="/movies"
+                className="transition-colors hover:text-pink-400"
+              >
+                Movies
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/add-movie"
+                className="transition-colors hover:text-pink-400"
+              >
+                Add Movie
+              </Link>
+            </li>
             <li>
               <Link
                 to="/favorites"

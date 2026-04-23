@@ -141,6 +141,13 @@ export async function getGenres() {
   const unique = Array.from(new Map(all.map((g: any) => [g.id, g])).values());
   return unique;
 }
+export async function getByGenre(genreId: number, type: 'tv' | 'movie') {
+  const res = await fetch(
+    `${BASE_URL}/discover/${type}?api_key=${API_KEY}&language=ar&with_genres=${genreId}&with_original_language=ar&sort_by=popularity.desc`
+  )
+  if (!res.ok) throw new Error('Failed to fetch by genre')
+  return res.json()
+}
 export interface TMDBSeries {
   id: number;
   name: string;

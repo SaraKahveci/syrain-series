@@ -17,6 +17,8 @@ import Admin from "./pages/Admin";
 import Movies from "./pages/Movies";
 import AddMovie from "./pages/AddMovie";
 import MovieDetails from "./pages/MovieDetails";
+import Genre from "./pages/Genre";
+import Genres from "./pages/Genres";
 
 export default function App() {
   return (
@@ -39,9 +41,10 @@ export default function App() {
           <Route path="/seriesdetails" element={<SeriesDetails />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/genre/:id/:name" element={<Genre />} />
+          <Route path="/genres" element={<Genres />} />
           {/* Details */}
           <Route path="/series/:id" element={<SeriesDetails />} />
-
           <Route path="/actor/:id" element={<Actor />} />
         </Routes>
       </BrowserRouter>
