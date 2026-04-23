@@ -7,13 +7,13 @@ import {
   addDoc,
   doc,
   setDoc,
-  getDoc,
   query,
   where,
   orderBy,
   onSnapshot,
   deleteDoc,
 } from 'firebase/firestore'
+import { useToast } from '../context/ToastContext'
 
 type Review = {
   id: string
@@ -33,6 +33,7 @@ const ADMIN_EMAIL = 'sarakahveci3@gmail.com'
 
 export default function ReviewSection({ contentId }: Props) {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [reviews, setReviews] = useState<Review[]>([])
   const [text, setText] = useState('')
   const [rating, setRating] = useState(0)
@@ -66,36 +67,38 @@ export default function ReviewSection({ contentId }: Props) {
   }, [contentId, user])
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault()
-  if (!user || !text.trim() || rating === 0) return
+    e.preventDefault()
+    if (!user || !text.trim() || rating === 0) return
 
-  console.log('Submitting review:', { contentId, uid: user.uid, rating, text })
+    try {
+      const reviewData = {
+        contentId,
+        uid: user.uid,
+        userEmail: user.email ?? '',
+        userName: user.displayName ?? user.email ?? 'Anonymous',
+        rating,
+        text: text.trim(),
+        createdAt: new Date().toISOString(),
+      }
 
-  try {
-    const reviewData = {
-      contentId,
-      uid: user.uid,
-      userEmail: user.email ?? '',
-      userName: user.displayName ?? user.email ?? 'Anonymous',
-      rating,
-      text: text.trim(),
-      createdAt: new Date().toISOString(),
+      if (userReview) {
+        await setDoc(doc(db, 'reviews', userReview.id), reviewData)
+        showToast('Review updated ✓')
+      } else {
+        await addDoc(collection(db, 'reviews'), reviewData)
+        showToast('Review submitted ✓')
+      }
+
+      setEditing(false)
+    } catch (err) {
+      console.error('REVIEW SUBMIT ERROR:', err)
+      showToast('Failed to submit review', 'error')
     }
-
-    if (userReview) {
-      await setDoc(doc(db, 'reviews', userReview.id), reviewData)
-    } else {
-      await addDoc(collection(db, 'reviews'), reviewData)
-    }
-
-    console.log('Review submitted successfully')
-    setEditing(false)
-  } catch (err) {
-    console.error('REVIEW SUBMIT ERROR:', err)
   }
-}
+
   async function handleDelete(id: string) {
     await deleteDoc(doc(db, 'reviews', id))
+    showToast('Review deleted')
   }
 
   const avgRating = reviews.length > 0
@@ -105,9 +108,7 @@ export default function ReviewSection({ contentId }: Props) {
   return (
     <div className="mt-10 border-t border-zinc-800 pt-6 text-white">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">
-          Reviews ({reviews.length})
-        </h3>
+        <h3 className="text-lg font-semibold">Reviews ({reviews.length})</h3>
         {reviews.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-yellow-400 text-sm">
@@ -171,8 +172,6 @@ export default function ReviewSection({ contentId }: Props) {
             <h4 className="text-sm font-semibold mb-3">
               {userReview ? 'Edit your review' : 'Write a review'}
             </h4>
-
-            {/* Star picker */}
             <div className="flex gap-1 mb-3">
               {[1, 2, 3, 4, 5].map(star => (
                 <span
@@ -187,12 +186,11 @@ export default function ReviewSection({ contentId }: Props) {
                 <span className="text-xs text-zinc-500 ml-2 self-center">Pick a score</span>
               )}
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-3">
               <textarea
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="Share your thoughts about this series..."
+                placeholder="Share your thoughts..."
                 rows={4}
                 className="w-full bg-zinc-800 p-3 rounded-md text-sm outline-none resize-none"
               />

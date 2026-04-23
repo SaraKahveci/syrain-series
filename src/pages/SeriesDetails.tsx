@@ -14,11 +14,14 @@ import { useAuth } from '../context/AuthContext'
 import { useFavourite } from '../context/FavouriteContext'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
+import { SkeletonDetail } from '../components/Skeleton'
+import { useToast } from '../context/ToastContext'
 
 export default function SeriesDetails() {
   const { id } = useParams()
   const { user } = useAuth()
   const { toggleFavourite, isFavourite } = useFavourite()
+  const { showToast } = useToast()
   const [series, setSeries] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [userRating, setUserRating] = useState(0)
@@ -94,6 +97,7 @@ export default function SeriesDetails() {
       createdAt: new Date().toISOString(),
     })
     setUserRating(rating)
+    showToast(`Rated ${rating} stars ⭐`)
   }
 
   async function handleSeasonChange(season: number) {
@@ -105,12 +109,14 @@ export default function SeriesDetails() {
 
   function handleToggle() {
     if (!user || !id || !series) return
+    const favorited = isFavourite(Number(id))
     toggleFavourite({
       id: Number(id),
       title: series.title || series.name,
       image: series.image || `https://image.tmdb.org/t/p/w500${series.poster_path}`,
       rating: series.rating ?? series.vote_average / 2,
     })
+    showToast(favorited ? 'Removed from favorites' : 'Added to favorites ❤️')
   }
 
   async function handleWatchlist() {
@@ -119,6 +125,7 @@ export default function SeriesDetails() {
     if (inWatchlist) {
       await deleteDoc(ref)
       setInWatchlist(false)
+      showToast('Removed from watchlist')
     } else {
       await setDoc(ref, {
         uid: user.uid,
@@ -129,10 +136,11 @@ export default function SeriesDetails() {
         addedAt: new Date().toISOString(),
       })
       setInWatchlist(true)
+      showToast('Added to watchlist 🕐')
     }
   }
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>
+  if (loading) return <SkeletonDetail />
   if (!series) return <p className="text-center mt-10">Series not found</p>
 
   const favorited = isFavourite(Number(id))
@@ -315,7 +323,7 @@ export default function SeriesDetails() {
       {/* Similar Series */}
       {!isLocal && similarSeries.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold mb-4 text-red-600">You Might Also Like</h2>
+          <h2 className="text-xl font-bold mb-4">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {similarSeries.map((s: any) => (
               <Link to={`/series/${s.id}`} key={s.id}>

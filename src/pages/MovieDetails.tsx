@@ -9,11 +9,14 @@ import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { getMovies } from "../services/movieStore";
 import { Movie } from "../types/series";
 import ReviewSection from "../components/ReviewSection";
+import { SkeletonDetail } from '../components/Skeleton'
+import { useToast } from '../context/ToastContext'
 
 export default function MovieDetails() {
   const { id } = useParams();
   const { user } = useAuth();
   const { toggleFavourite, isFavourite } = useFavourite();
+  const { showToast } = useToast()
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -81,16 +84,19 @@ export default function MovieDetails() {
       createdAt: new Date().toISOString(),
     });
     setUserRating(rating);
+    showToast(`Rated ${rating} stars ⭐`)
   }
 
   function handleToggle() {
     if (!user || !id || !movie) return;
+    const favorited = isFavourite(Number(id))
     toggleFavourite({
       id: Number(id),
       title: movie.title,
       image: movie.image || `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
       rating: movie.rating ?? movie.vote_average / 2,
     });
+    showToast(favorited ? 'Removed from favorites' : 'Added to favorites ❤️')
   }
 
   async function handleWatchlist() {
@@ -99,6 +105,7 @@ export default function MovieDetails() {
     if (inWatchlist) {
       await deleteDoc(ref)
       setInWatchlist(false)
+      showToast('Removed from watchlist')
     } else {
       await setDoc(ref, {
         uid: user.uid,
@@ -109,10 +116,11 @@ export default function MovieDetails() {
         addedAt: new Date().toISOString(),
       })
       setInWatchlist(true)
+      showToast('Added to watchlist 🕐')
     }
   }
 
-  if (loading) return <p className="text-center mt-10 text-white">Loading...</p>;
+  if (loading) return <SkeletonDetail />
   if (!movie) return <p className="text-center mt-10 text-white">Movie not found</p>;
 
   const favorited = isFavourite(Number(id));
@@ -250,7 +258,7 @@ export default function MovieDetails() {
       {/* Similar Movies */}
       {!isLocal && similarMovies.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold mb-4 text-red-600">You Might Also Like</h2>
+          <h2 className="text-xl font-bold mb-4">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {similarMovies.map((m: any) => (
               <Link to={`/movies/${m.id}`} key={m.id}>
@@ -276,5 +284,5 @@ export default function MovieDetails() {
 
       <ReviewSection contentId={`movie_${id}`} />
     </div>
-  );
+  )
 }

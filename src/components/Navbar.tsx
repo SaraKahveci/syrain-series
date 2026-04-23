@@ -3,12 +3,16 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Navbar() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { dark, toggleTheme } = useTheme();
+
+  // add in desktop menu:
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +34,14 @@ export default function Navbar() {
           <Link to="/" className="text-lg sm:text-xl font-bold">
             Arabic Series
           </Link>
-
+          <li>
+            <button
+              onClick={toggleTheme}
+              className="text-sm px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition"
+            >
+              {dark ? "☀️" : "🌙"}
+            </button>
+          </li>
           {/* Desktop menu */}
           <ul className="hidden md:flex gap-6 items-center">
             <li>
