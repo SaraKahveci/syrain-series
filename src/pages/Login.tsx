@@ -15,24 +15,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
+  setError(null)
+  setLoading(true)
 
-    try {
-      if (mode === 'register') {
-        await createUserWithEmailAndPassword(auth, email, password)
-      } else {
-        await signInWithEmailAndPassword(auth, email, password)
-      }
-      navigate('/')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+  try {
+    if (mode === 'register') {
+      await createUserWithEmailAndPassword(auth, email, password)
+      navigate('/')  // new users go home
+    } else {
+      await signInWithEmailAndPassword(auth, email, password)
+      navigate('/profile')  // returning users go to profile
     }
+  } catch (err: any) {
+    setError(err.message)
+  } finally {
+    setLoading(false)
   }
+}
 
   async function handleGoogle() {
     setError(null)
