@@ -11,6 +11,7 @@ import { Movie } from "../types/series";
 import ReviewSection from "../components/ReviewSection";
 import { SkeletonDetail } from '../components/Skeleton'
 import { useToast } from '../context/ToastContext'
+import ShareButton from "../components/ShareButton";
 
 export default function MovieDetails() {
   const { id } = useParams();
@@ -147,6 +148,8 @@ export default function MovieDetails() {
             >
               {inWatchlist ? '🕐 Watchlist ✓' : '🕐 Add to Watchlist'}
             </button>
+
+<ShareButton title={movie.title || movie.name} />
             <button
               onClick={handleToggle}
               className={`text-2xl transition-transform hover:scale-110 ${
