@@ -21,8 +21,7 @@ import Genres from "./pages/Genres";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import Footer from "./components/Footer";
-
-// inside BrowserRouter, after </Routes>:
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -50,6 +49,8 @@ export default function App() {
               <Route path="/genres" element={<Genres />} />
               <Route path="/series/:id" element={<SeriesDetails />} />
               <Route path="/actor/:id" element={<Actor />} />
+
+              <Route path="*" element={<NotFound />} />
             </Routes>
 
             <Footer />

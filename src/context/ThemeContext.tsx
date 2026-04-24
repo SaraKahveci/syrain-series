@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider value={{ dark, toggleTheme: () => setDark(!dark) }}>
       {/* This div is the secret sauce. It forces the colors regardless of global CSS */}
-      <div className={`${dark ? 'dark' : ''} min-h-screen bg-fuchsia-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition-colors duration-300`}>
+      <div className={`${dark ? 'dark' : ''} min-h-screen bg-pink-200 dark:bg-zinc-800 text-zinc-900 dark:text-white transition-colors duration-300`}>
         {children}
       </div>
     </ThemeContext.Provider>
