@@ -44,7 +44,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://linkedin.com/in/sarakahveci"
+                  href="https://www.linkedin.com/in/sara-kahveci/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-zinc-400 hover:text-pink-400 transition-colors"

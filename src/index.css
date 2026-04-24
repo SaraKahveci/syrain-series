@@ -2,23 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #09090b;
-  color: white;
-}
+@layer base {
+  /* This applies when the .dark class is NOT present */
+  body {
+    background-color: #e99ef4; /* red-400 */
+    color: #18181b;            /* zinc-900 */
+  }
 
-html.light body {
-  background-color: white;
-  color: black;
-}
-
-html.dark {
-  filter: invert(1) hue-rotate(180deg);
-}
-
-html.dark img,
-html.dark video,
-html.dark iframe,
-html.dark .no-invert {
-  filter: invert(1) hue-rotate(180deg);
+  /* This applies only when .dark is present */
+  .dark body {
+    background-color: #27272a; /* zinc-800 */
+    color: #ffffff;            /* white */
+  }
 }

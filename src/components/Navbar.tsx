@@ -12,8 +12,6 @@ export default function Navbar() {
   const { user } = useAuth();
   const { dark, toggleTheme } = useTheme();
 
-  // add in desktop menu:
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
@@ -31,17 +29,21 @@ export default function Navbar() {
     <nav className="w-full bg-black text-white">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-lg sm:text-xl font-bold">
-            Arabic Series
-          </Link>
-          <li>
+          
+          {/* Logo & Theme Toggle Group */}
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-lg sm:text-xl font-bold">
+              Arabic Series
+            </Link>
             <button
               onClick={toggleTheme}
               className="text-sm px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition"
+              aria-label="Toggle Theme"
             >
               {dark ? "☀️" : "🌙"}
             </button>
-          </li>
+          </div>
+
           {/* Desktop menu */}
           <ul className="hidden md:flex gap-6 items-center">
             <li>
@@ -50,50 +52,32 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link
-                to="/genres"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/genres" className="transition-colors hover:text-pink-400">
                 Genres
               </Link>
             </li>
             <li>
-              <Link
-                to="/add-series"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/add-series" className="transition-colors hover:text-pink-400">
                 Add Series
               </Link>
             </li>
             <li>
-              <Link
-                to="/movies"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/movies" className="transition-colors hover:text-pink-400">
                 Movies
               </Link>
             </li>
             <li>
-              <Link
-                to="/add-movie"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/add-movie" className="transition-colors hover:text-pink-400">
                 Add Movie
               </Link>
             </li>
             <li>
-              <Link
-                to="/favorites"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/favorites" className="transition-colors hover:text-pink-400">
                 Favorites
               </Link>
             </li>
             <li>
-              <Link
-                to="/contact"
-                className="transition-colors hover:text-pink-400"
-              >
+              <Link to="/contact" className="transition-colors hover:text-pink-400">
                 Contact
               </Link>
             </li>
@@ -161,21 +145,11 @@ export default function Navbar() {
         {/* Mobile menu */}
         {open && (
           <div className="md:hidden mt-4 space-y-4">
-            <Link to="/" className="block">
-              Home
-            </Link>
-            <Link to="/add-series" className="block">
-              Add Series
-            </Link>
-            <Link to="/" className="block">
-              Series
-            </Link>
-            <Link to="/favorites" className="block">
-              Favorites
-            </Link>
-            <Link to="/contact" className="block">
-              Contact
-            </Link>
+            <Link to="/" className="block">Home</Link>
+            <Link to="/add-series" className="block">Add Series</Link>
+            <Link to="/" className="block">Series</Link>
+            <Link to="/favorites" className="block">Favorites</Link>
+            <Link to="/contact" className="block">Contact</Link>
 
             <form onSubmit={handleSubmit}>
               <input

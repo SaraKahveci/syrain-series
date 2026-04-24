@@ -145,9 +145,9 @@ export default function Home() {
 
       {/* Community ratings notice */}
       {Object.keys(communityRatings).length > 0 && (
-        <p className="text-xs text-zinc-500 mb-4">
-          ⭐ Ratings shown include community scores where available
-        </p>
+      <p className="text-sm text-zinc-200 mb-4 bg-zinc-600 px-2 py-1 rounded-md inline-block">
+  ⭐ Ratings shown include community scores where available
+</p>
       )}
 
       {/* Grid */}
