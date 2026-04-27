@@ -29,7 +29,7 @@ export default function Navbar() {
     <nav className="w-full bg-black text-white">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          
+
           {/* Logo & Theme Toggle Group */}
           <div className="flex items-center gap-4">
             <Link to="/" className="text-lg sm:text-xl font-bold">
@@ -47,57 +47,39 @@ export default function Navbar() {
           {/* Desktop menu */}
           <ul className="hidden md:flex gap-6 items-center">
             <li>
-              <Link to="/" className="transition-colors hover:text-pink-400">
-                Home
-              </Link>
+              <Link to="/" className="transition-colors hover:text-pink-400">Home</Link>
             </li>
             <li>
-              <Link to="/genres" className="transition-colors hover:text-pink-400">
-                Genres
-              </Link>
+              <Link to="/genres" className="transition-colors hover:text-pink-400">Genres</Link>
             </li>
             <li>
-              <Link to="/add-series" className="transition-colors hover:text-pink-400">
-                Add Series
-              </Link>
+              <Link to="/add-series" className="transition-colors hover:text-pink-400">Add Series</Link>
             </li>
             <li>
-              <Link to="/movies" className="transition-colors hover:text-pink-400">
-                Movies
-              </Link>
+              <Link to="/movies" className="transition-colors hover:text-pink-400">Movies</Link>
             </li>
             <li>
-              <Link to="/add-movie" className="transition-colors hover:text-pink-400">
-                Add Movie
-              </Link>
+              <Link to="/add-movie" className="transition-colors hover:text-pink-400">Add Movie</Link>
             </li>
             <li>
-              <Link to="/favorites" className="transition-colors hover:text-pink-400">
-                Favorites
-              </Link>
+              <Link to="/favorites" className="transition-colors hover:text-pink-400">Favorites</Link>
             </li>
             <li>
-              <Link to="/contact" className="transition-colors hover:text-pink-400">
-                Contact
-              </Link>
+              <Link to="/contact" className="transition-colors hover:text-pink-400">Contact</Link>
             </li>
             <li>
               <form onSubmit={handleSubmit}>
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search ..."
+                  placeholder="Search..."
                   className="bg-zinc-800 px-3 py-1.5 rounded-md text-sm w-40 lg:w-56 outline-none focus:ring-2 focus:ring-pink-500"
                 />
               </form>
             </li>
-
             {user?.email === "sarakahveci3@gmail.com" && (
               <li>
-                <Link
-                  to="/admin"
-                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
-                >
+                <Link to="/admin" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
                   Admin
                 </Link>
               </li>
@@ -145,11 +127,13 @@ export default function Navbar() {
         {/* Mobile menu */}
         {open && (
           <div className="md:hidden mt-4 space-y-4">
-            <Link to="/" className="block">Home</Link>
-            <Link to="/add-series" className="block">Add Series</Link>
-            <Link to="/" className="block">Series</Link>
-            <Link to="/favorites" className="block">Favorites</Link>
-            <Link to="/contact" className="block">Contact</Link>
+            <Link to="/" className="block" onClick={() => setOpen(false)}>Home</Link>
+            <Link to="/add-series" className="block" onClick={() => setOpen(false)}>Add Series</Link>
+            <Link to="/movies" className="block" onClick={() => setOpen(false)}>Movies</Link>
+            <Link to="/add-movie" className="block" onClick={() => setOpen(false)}>Add Movie</Link>
+            <Link to="/genres" className="block" onClick={() => setOpen(false)}>Genres</Link>
+            <Link to="/favorites" className="block" onClick={() => setOpen(false)}>Favorites</Link>
+            <Link to="/contact" className="block" onClick={() => setOpen(false)}>Contact</Link>
 
             <form onSubmit={handleSubmit}>
               <input
@@ -162,7 +146,11 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-                <Link to="/profile" className="text-sm text-zinc-400 truncate">
+                <Link
+                  to="/profile"
+                  className="text-sm text-zinc-400 truncate"
+                  onClick={() => setOpen(false)}
+                >
                   {user.displayName ?? user.email}
                 </Link>
                 <button
@@ -176,6 +164,7 @@ export default function Navbar() {
               <Link
                 to="/login"
                 className="block bg-pink-600 hover:bg-pink-700 transition text-sm px-4 py-2 rounded-lg font-semibold text-center"
+                onClick={() => setOpen(false)}
               >
                 Sign In
               </Link>
