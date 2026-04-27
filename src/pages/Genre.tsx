@@ -1,24 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getByGenre } from '../api/tmdb'
 import SeriesCard from '../components/SeriesCard'
 
 type Filter = 'series' | 'movies'
 
+type TMDBItem = {
+  id: number
+  name?: string
+  title?: string
+  poster_path: string | null
+  vote_average: number
+}
+
 export default function Genre() {
   const { id, name } = useParams()
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<TMDBItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('series')
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!id) return
     setLoading(true)
-    getByGenre(Number(id), filter === 'series' ? 'tv' : 'movie').then(data => {
-      setResults(data.results ?? [])
-      setLoading(false)
-    })
+    const data = await getByGenre(Number(id), filter === 'series' ? 'tv' : 'movie')
+    setResults(data.results ?? [])
+    setLoading(false)
   }, [id, filter])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
+  }, [loadData])
 
   return (
     <div className="p-6 text-white">
@@ -53,11 +65,11 @@ export default function Genre() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filter === 'series' ? (
-            results.map((item: any) => (
+            results.map((item) => (
               <SeriesCard
                 key={item.id}
                 id={item.id}
-                title={item.name}
+                title={item.name ?? ''}
                 image={item.poster_path
                   ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
                   : '/placeholder.jpg'}
@@ -65,14 +77,14 @@ export default function Genre() {
               />
             ))
           ) : (
-            results.map((item: any) => (
+            results.map((item) => (
               <Link to={`/movies/${item.id}`} key={item.id}>
                 <div className="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition">
                   <img
                     src={item.poster_path
                       ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
                       : '/placeholder.jpg'}
-                    alt={item.title}
+                    alt={item.title ?? ''}
                     className="h-72 w-full object-cover"
                   />
                   <div className="p-4">

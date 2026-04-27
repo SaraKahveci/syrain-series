@@ -26,10 +26,12 @@ const GENRE_EMOJIS: Record<string, string> = {
 export default function Genres() {
   const [genres, setGenres] = useState<{ id: number; name: string }[]>([])
 
-  useEffect(() => {
-    getGenres().then(data => setGenres(data))
-  }, [])
-
+useEffect(() => {
+  getGenres().then(data => {
+    console.log('GENRES:', data)
+    setGenres(data)
+  })
+}, [])
   return (
     <div className="p-6 text-white">
       <h1 className="text-3xl font-bold mb-8">Browse by Genre</h1>
