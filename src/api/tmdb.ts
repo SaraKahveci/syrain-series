@@ -1,6 +1,14 @@
 const BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = "255227246862979880faf00116fac593";
 
+export async function getNowPlayingSeries() {
+  const res = await fetch(
+    `${BASE_URL}/tv/airing_today?api_key=${API_KEY}&language=ar&with_original_language=ar`
+  );
+  if (!res.ok) throw new Error("Failed to fetch now playing series");
+  return res.json();
+}
+
 export async function getPopularSeries() {
   const res = await fetch(
     `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=ar&with_original_language=ar`
@@ -66,6 +74,7 @@ export async function getActorCredits(personId: string) {
   if (!res.ok) throw new Error("Failed to fetch actor credits");
   return res.json();
 }
+
 export async function getPopularMovies() {
   const res = await fetch(
     `${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ar&with_original_language=ar`
@@ -107,7 +116,9 @@ export async function getSeriesVideos(id: string) {
 }
 
 export async function getMovieVideos(id: string) {
-  const res = await fetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`);
+  const res = await fetch(
+    `${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`
+  );
   if (!res.ok) throw new Error("Failed to fetch videos");
   return res.json();
 }
@@ -136,18 +147,19 @@ export async function getGenres() {
   const tvData = await tvRes.json();
   const movieData = await movieRes.json();
 
-  // merge and deduplicate by id
   const all = [...(tvData.genres ?? []), ...(movieData.genres ?? [])];
   const unique = Array.from(new Map(all.map((g: any) => [g.id, g])).values());
   return unique;
 }
-export async function getByGenre(genreId: number, type: 'tv' | 'movie') {
+
+export async function getByGenre(genreId: number, type: "tv" | "movie") {
   const res = await fetch(
     `${BASE_URL}/discover/${type}?api_key=${API_KEY}&language=ar&with_genres=${genreId}&with_original_language=ar&sort_by=popularity.desc`
-  )
-  if (!res.ok) throw new Error('Failed to fetch by genre')
-  return res.json()
+  );
+  if (!res.ok) throw new Error("Failed to fetch by genre");
+  return res.json();
 }
+
 export interface TMDBSeries {
   id: number;
   name: string;

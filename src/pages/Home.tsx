@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { getPopularSeries, getSeriesByFilter } from "../api/tmdb";
+import {
+  getNowPlayingSeries,
+  getSeriesByFilter,
+} from "../api/tmdb";
 import SeriesCard from "../components/SeriesCard";
 import { getSeries } from "../services/seriesStore";
 import { Series } from "../types/series";
@@ -13,15 +16,20 @@ type TMDBItem = {
   poster_path: string | null;
   vote_average: number;
   first_air_date: string;
+  original_language: string;
 };
 
-type Filter = "all" | "top_rated" | "newest" | "local";
+type Filter = "all" | "top_rated" | "newest" | "local" | "now_playing";
+
+const isArabic = (item: TMDBItem) =>
+  item.original_language === "ar" ||
+  /[\u0600-\u06FF]/.test(item.name);
 
 export default function Home() {
   const [allSeries, setAllSeries] = useState<Series[]>([]);
   const [filtered, setFiltered] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("now_playing");
   const [communityRatings, setCommunityRatings] = useState<
     Record<string, number>
   >({});
@@ -30,7 +38,7 @@ export default function Home() {
     const loadData = async () => {
       try {
         const [tmdbData, ratingsSnap] = await Promise.all([
-          getPopularSeries(),
+          getNowPlayingSeries(),
           getDocs(collection(db, "ratings")),
         ]);
 
@@ -40,28 +48,31 @@ export default function Home() {
           if (!ratingsMap[seriesId]) ratingsMap[seriesId] = [];
           ratingsMap[seriesId].push(rating);
         });
+
         const avgRatings: Record<string, number> = {};
         Object.entries(ratingsMap).forEach(([id, arr]) => {
           avgRatings[id] = arr.reduce((a, b) => a + b, 0) / arr.length;
         });
         setCommunityRatings(avgRatings);
 
-        const apiSeries = tmdbData.results.map(
-          (item: TMDBItem): Series & { releaseDate?: string } => ({
+        const apiSeries = tmdbData.results
+          .filter(isArabic)
+          .map((item: TMDBItem): Series => ({
             id: item.id,
             title: item.name,
             image: item.poster_path
               ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
               : "/placeholder.jpg",
-            rating: avgRatings[item.id.toString()] ?? item.vote_average / 2,
-            releaseDate: item.first_air_date,
-          })
-        );
+            rating:
+              avgRatings[item.id.toString()] ??
+              item.vote_average / 2,
+          }));
 
         const localSeries = getSeries();
         const combined = [...localSeries, ...apiSeries];
+
         setAllSeries(combined);
-        setFiltered(combined);
+        setFiltered(apiSeries);
       } catch (e) {
         console.error(e);
       } finally {
@@ -70,7 +81,6 @@ export default function Home() {
     };
 
     loadData();
-
     const onStorage = () => loadData();
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -87,6 +97,28 @@ export default function Home() {
       return;
     }
 
+    if (filter === "now_playing") {
+      setLoading(true);
+      getNowPlayingSeries()
+        .then((data) => {
+          const series = data.results
+            .filter(isArabic)
+            .map((item: TMDBItem): Series => ({
+              id: item.id,
+              title: item.name,
+              image: item.poster_path
+                ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                : "/placeholder.jpg",
+              rating:
+                communityRatings[item.id.toString()] ??
+                item.vote_average / 2,
+            }));
+          setFiltered(series);
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const sortMap: Record<string, string> = {
       top_rated: "vote_average.desc",
       newest: "first_air_date.desc",
@@ -95,17 +127,18 @@ export default function Home() {
     setLoading(true);
     getSeriesByFilter(sortMap[filter])
       .then((data) => {
-        const series = data.results.map(
-          (item: TMDBItem): Series => ({
+        const series = data.results
+          .filter(isArabic)
+          .map((item: TMDBItem): Series => ({
             id: item.id,
             title: item.name,
             image: item.poster_path
               ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
               : "/placeholder.jpg",
             rating:
-              communityRatings[item.id.toString()] ?? item.vote_average / 2,
-          })
-        );
+              communityRatings[item.id.toString()] ??
+              item.vote_average / 2,
+          }));
         setFiltered(series);
       })
       .finally(() => setLoading(false));
@@ -119,11 +152,12 @@ export default function Home() {
         ))}
       </div>
     );
+
   return (
     <div className="p-6">
-      {/* Filters */}
       <div className="flex gap-3 mb-6 flex-wrap">
         {[
+          { key: "now_playing", label: "📺 Now Playing" },
           { key: "all", label: "🎬 All" },
           { key: "top_rated", label: "⭐ Top Rated" },
           { key: "newest", label: "🆕 Newest" },
@@ -143,14 +177,12 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Community ratings notice */}
       {Object.keys(communityRatings).length > 0 && (
-      <p className="text-sm text-zinc-200 mb-4 bg-zinc-600 px-2 py-1 rounded-md inline-block">
-  ⭐ Ratings shown include community scores where available
-</p>
+        <p className="text-sm text-zinc-200 mb-4 bg-zinc-600 px-2 py-1 rounded-md inline-block">
+          ⭐ Ratings shown include community scores where available
+        </p>
       )}
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {filtered.map((series) => (
           <SeriesCard key={series.id} {...series} />
@@ -158,7 +190,9 @@ export default function Home() {
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-zinc-500 text-center mt-10">No series found.</p>
+        <p className="text-zinc-500 text-center mt-10">
+          No series found.
+        </p>
       )}
     </div>
   );
