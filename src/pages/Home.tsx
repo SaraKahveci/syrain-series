@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   getNowPlayingSeries,
   getSeriesByFilter,
@@ -30,9 +30,7 @@ export default function Home() {
   const [filtered, setFiltered] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("now_playing");
-  const [communityRatings, setCommunityRatings] = useState<
-    Record<string, number>
-  >({});
+  const [communityRatings, setCommunityRatings] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,16 +41,26 @@ export default function Home() {
         ]);
 
         const ratingsMap: Record<string, number[]> = {};
+
         ratingsSnap.docs.forEach((d) => {
-          const { seriesId, rating } = d.data();
-          if (!ratingsMap[seriesId]) ratingsMap[seriesId] = [];
-          ratingsMap[seriesId].push(rating);
+          const data = d.data() as {
+            seriesId: string;
+            rating: number;
+          };
+
+          if (!ratingsMap[data.seriesId]) {
+            ratingsMap[data.seriesId] = [];
+          }
+
+          ratingsMap[data.seriesId].push(data.rating);
         });
 
         const avgRatings: Record<string, number> = {};
+
         Object.entries(ratingsMap).forEach(([id, arr]) => {
           avgRatings[id] = arr.reduce((a, b) => a + b, 0) / arr.length;
         });
+
         setCommunityRatings(avgRatings);
 
         const apiSeries = tmdbData.results
@@ -64,8 +72,7 @@ export default function Home() {
               ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
               : "/placeholder.jpg",
             rating:
-              avgRatings[item.id.toString()] ??
-              item.vote_average / 2,
+              avgRatings[item.id.toString()] ?? item.vote_average / 2,
           }));
 
         const localSeries = getSeries();
@@ -81,52 +88,33 @@ export default function Home() {
     };
 
     loadData();
+
     const onStorage = () => loadData();
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   useEffect(() => {
-    if (filter === "all") {
-      setFiltered(allSeries);
-      return;
-    }
-
-    if (filter === "local") {
-      setFiltered(allSeries.filter((s: any) => s.id >= 1_000_000_000));
-      return;
-    }
-
-    if (filter === "now_playing") {
-      setLoading(true);
-      getNowPlayingSeries()
-        .then((data) => {
-          const series = data.results
-            .filter(isArabic)
-            .map((item: TMDBItem): Series => ({
-              id: item.id,
-              title: item.name,
-              image: item.poster_path
-                ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                : "/placeholder.jpg",
-              rating:
-                communityRatings[item.id.toString()] ??
-                item.vote_average / 2,
-            }));
-          setFiltered(series);
-        })
-        .finally(() => setLoading(false));
-      return;
-    }
-
     const sortMap: Record<string, string> = {
       top_rated: "vote_average.desc",
       newest: "first_air_date.desc",
     };
 
-    setLoading(true);
-    getSeriesByFilter(sortMap[filter])
-      .then((data) => {
+    const loadFiltered = async () => {
+      if (filter === "all") {
+        setFiltered(allSeries);
+        return;
+      }
+
+      if (filter === "local") {
+        setFiltered(allSeries.filter((s) => s.id >= 1_000_000_000));
+        return;
+      }
+
+      if (filter === "now_playing") {
+        setLoading(true);
+        const data = await getNowPlayingSeries();
+
         const series = data.results
           .filter(isArabic)
           .map((item: TMDBItem): Series => ({
@@ -139,10 +127,45 @@ export default function Home() {
               communityRatings[item.id.toString()] ??
               item.vote_average / 2,
           }));
+
         setFiltered(series);
-      })
-      .finally(() => setLoading(false));
-  }, [filter, allSeries]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      const data = await getSeriesByFilter(sortMap[filter]);
+
+      const series = data.results
+        .filter(isArabic)
+        .map((item: TMDBItem): Series => ({
+          id: item.id,
+          title: item.name,
+          image: item.poster_path
+            ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+            : "/placeholder.jpg",
+          rating:
+            communityRatings[item.id.toString()] ??
+            item.vote_average / 2,
+        }));
+
+      setFiltered(series);
+      setLoading(false);
+    };
+
+    loadFiltered();
+  }, [filter, allSeries, communityRatings]);
+
+  const displayedSeries = useMemo(() => {
+    if (filter === "all") return allSeries;
+
+    if (filter === "local") {
+      return allSeries.filter((s) => s.id >= 1_000_000_000);
+    }
+
+    return filtered;
+  }, [filter, allSeries, filtered]);
 
   if (loading)
     return (
@@ -184,12 +207,12 @@ export default function Home() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filtered.map((series) => (
+        {displayedSeries.map((series) => (
           <SeriesCard key={series.id} {...series} />
         ))}
       </div>
 
-      {filtered.length === 0 && (
+      {displayedSeries.length === 0 && (
         <p className="text-zinc-500 text-center mt-10">
           No series found.
         </p>
