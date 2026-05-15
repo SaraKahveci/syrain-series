@@ -17,6 +17,14 @@ export async function getPopularSeries() {
   return res.json();
 }
 
+export async function searchActors(query: string) {
+  const res = await fetch(
+    `${BASE_URL}/search/person?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ar`
+  )
+  if (!res.ok) throw new Error('Failed to search actors')
+  return res.json()
+}
+
 export async function searchSeries(query: string) {
   const res = await fetch(
     `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(
